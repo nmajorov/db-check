@@ -43,7 +43,7 @@ copy uberjar in deployments dir
 
              oc export is redhat-openjdk18-openshift -n openshift | oc create -f -
              oc get is
-             NAME                         DOCKER REPO                                                        TAGS          UPDATED
+             NAME         DOCKER REPO TAGS          UPDATED
              redhat-openjdk18-openshift   docker-registry.default.svc:5000/raus/redhat-openjdk18-openshift   1.0,1.1,1.2   About a minute ago
 
 ### 3.  tag it to latest ###
@@ -53,7 +53,8 @@ copy uberjar in deployments dir
 
 
         oc get is
-        NAME    DOCKER REPO                                                        TAGS                         UPDATED redhat-openjdk18-openshift   docker-registry.default.svc:5000/raus/redhat-openjdk18-openshift   latest,1.0,1.1 + 1 more...   20 seconds ago
+        NAME    DOCKER REPO                                                        TAGS                         UPDATED 
+        redhat-openjdk18-openshift   docker-registry.default.svc:5000/raus/redhat-openjdk18-openshift   latest,1.0,1.1 + 1 more...   20 seconds ago
 
 ### 4. create binary build and application 
 
