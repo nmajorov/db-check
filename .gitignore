@@ -13,5 +13,6 @@ overlays
 .classpath
 *.fmd
 .cache
+.vscode
 dependency-reduced-pom.xml
 

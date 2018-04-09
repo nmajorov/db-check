@@ -71,7 +71,7 @@ class DBChecker
     while true
       begin
       
-        puts("loading driver")
+        puts("loading driver #{@driverClass}")
         Java::JavaClass.for_name(@driverClass)
       
           puts("start connection")
@@ -80,18 +80,31 @@ class DBChecker
           info.setProperty("user", @userName);
           info.setProperty("password", @pass);
           con = DriverManager.getConnection(@url,info)
-          puts("connected...")
+          puts("A connection was successfully established with the server #{@url} ")
           databaseName= con.getMetaData().getDatabaseProductName()
           databaseVersion =con.getMetaData().getDatabaseMajorVersion()
           puts " database name: #{databaseName} version: #{databaseVersion}"
+          puts " "
+          n += 1
+          mutex.synchronize{n}
+          break if n >= @maxtry.to_i
           
+          puts("sleep #{sleepsec} sec befor next attempt to connect")
+          sleep(sleepsec)
+          
+      rescue => e
+        puts(e)
+        # works for postgresql 
+        if e.message.include? "The connection attempt failed"
           n += 1
           mutex.synchronize{n}
           break if n >= @maxtry.to_i
           puts("sleep #{sleepsec} sec befor next attempt to connect")
-          sleep(sleepsec)
-      rescue => e
-        puts(e)
+         sleep(sleepsec)
+         puts("") # do nothing  
+        else
+          break
+        end
 
       ensure
         if connection != nil
@@ -110,4 +123,6 @@ class DBChecker
     dbChecker = DBChecker.new()
   end
 
+
+  
 end
