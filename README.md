@@ -40,8 +40,13 @@ copy uberjar in deployments dir
 
 ### 2. export imagestream from openshift namespace ###
 
+create your project local imagestream for openjdk
+by exporting openjdk image from openshift namespace.
 
-             oc export is redhat-openjdk18-openshift -n openshift | oc create -f -
+
+            oc export is redhat-openjdk18-openshift -n openshift | oc create -f -
+
+            # list imagestreams  in your project
              oc get is
              NAME         DOCKER REPO TAGS          UPDATED
              redhat-openjdk18-openshift   docker-registry.default.svc:5000/raus/redhat-openjdk18-openshift   1.0,1.1,1.2   About a minute ago
