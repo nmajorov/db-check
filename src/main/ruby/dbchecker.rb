@@ -7,14 +7,18 @@ require "java"
 java_package 'ch.sag.dbchecker'
 java_import 'java.sql.DriverManager'
 java_import 'java.lang.System'
-java_import 'ch.sag.dbchecker.App'
 java_import 'java.util.Properties'
 class DBChecker
+
+
+
   def initialize
     @driverClass =  nil ? ENV['DRIVER_CLASS'] : System.getProperty('DRIVER_CLASS')
     @url = nil ? ENV['DB_URL'] :System.getProperty('DB_URL')
     @userName = nil ? ENV['DB_USERNAME'] : System.getProperty('DB_USERNAME')
     @pass = nil ? ENV['DB_PASSWORD'] : System.getProperty('DB_PASSWORD')
+    # how long to try to connect to database - default is unlimited
+    @maxtry =  nil ?  ENV['MAX_TRY'] : System.getProperty('MAX_TRY')
     
     
     if @driverClass  == nil
@@ -37,37 +41,66 @@ class DBChecker
     end
    
     
-  
     if @pass == nil
           puts("NO DB_PASSWORD property found  set empty one !")
           @pass=''
     end
     
+    begin
+      if @maxtry == nil
+        @maxtry = 4611686018427387903
+
+      end
+      @maxtry = Integer(@maxtry)
+      puts("maximum retry attempts for connection is #{ @maxtry} " )
+    rescue  ArgumentError => e
+      #puts("MAX_TRY should be an integer value")
+      raise RuntimeError.new("MAX_TRY should be an integer value")
+    end
+      
     
    
 
     puts("start testing  connection .... ")
     connection = nil
-    begin
-      puts("loading driver")
-      Java::JavaClass.for_name(@driverClass)
-      puts("start connection")
-      #Java::ChSagDbchecker::App:Class
+    n = 0
+    mutex = Mutex.new
+    #how long to sleep before attemts
+    sleepsec = 10
 
-      #App.new.connect(@driverClass,@url,@userName,@pass) 
-      info = Properties.new
-      info.setProperty("user", @userName);
-      info.setProperty("password", @pass);
-      con = DriverManager.getConnection(@url,info)
-      puts("connected...")
-      databaseName= con.getMetaData().getDatabaseProductName()
-      databaseVersion =con.getMetaData().getDatabaseMajorVersion()
-      puts " database name: #{databaseName} version: #{databaseVersion}"
-    ensure
-      if connection != nil
-        conneciton.close()
-        puts("connection closed...")
-      end
+    while true
+      begin
+      
+        puts("loading driver")
+        Java::JavaClass.for_name(@driverClass)
+      
+          puts("start connection")
+        
+          info = Properties.new
+          info.setProperty("user", @userName);
+          info.setProperty("password", @pass);
+          con = DriverManager.getConnection(@url,info)
+          puts("connected...")
+          databaseName= con.getMetaData().getDatabaseProductName()
+          databaseVersion =con.getMetaData().getDatabaseMajorVersion()
+          puts " database name: #{databaseName} version: #{databaseVersion}"
+          
+          n += 1
+          mutex.synchronize{n}
+          break if n >= @maxtry.to_i
+          puts("sleep #{sleepsec} sec befor next attempt to connect")
+          sleep(sleepsec)
+      rescue => e
+        puts(e)
+
+      ensure
+        if connection != nil
+          conneciton.close()
+          puts("connection closed...")
+        end
+      
+     end
+
     end 
     puts("... done testing  connection")
   end
